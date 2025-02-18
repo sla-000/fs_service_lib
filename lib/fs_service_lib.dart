@@ -48,7 +48,7 @@ class FsServiceLib {
   }) async {
     const pathUtils = PathUtils();
 
-    db = await FirestoreRepoImpl(
+    db = FirestoreRepoImpl(
       documentMapper: DocumentMapper(
         valueUtils: ValueMapper()
           ..init(
@@ -68,11 +68,12 @@ class FsServiceLib {
           databaseId: databaseId,
         ),
       pathUtils: pathUtils,
-    )
-      ..init(
-        projectId: projectId,
-        databaseId: databaseId,
-      );
+    );
+
+    await db.init(
+      projectId: projectId,
+      databaseId: databaseId,
+    );
   }
 
   Future<void> dispose() async => db.dispose();

@@ -1,6 +1,5 @@
+import 'package:fs_service_lib/utils/path_utils.dart';
 import 'package:test/test.dart';
-
-import '../../lib/utils/path_utils.dart';
 
 void main() {
   const pathUtils = PathUtils();

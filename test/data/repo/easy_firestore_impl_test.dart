@@ -1,12 +1,11 @@
 import 'package:fs_service_lib/data/mappers/document_mapper.dart';
+import 'package:fs_service_lib/data/repo/easy_firestore_impl.dart';
 import 'package:fs_service_lib/data/utils/firestore_path_utils.dart';
 import 'package:fs_service_lib/utils/firestore_api_provider.dart';
+import 'package:fs_service_lib/utils/path_utils.dart';
 import 'package:googleapis/firestore/v1.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
-
-import '../../../lib/data/repo/easy_firestore_impl.dart';
-import '../../../lib/utils/path_utils.dart';
 
 class _MockDocumentMapper extends Mock implements DocumentMapper {}
 

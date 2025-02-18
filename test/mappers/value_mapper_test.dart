@@ -1,7 +1,6 @@
+import 'package:fs_service_lib/domain/mappers/value_mapper.dart';
 import 'package:googleapis/firestore/v1.dart';
 import 'package:test/test.dart';
-
-import '../../lib/domain/mappers/value_mapper.dart';
 
 const _bytesPrefix = '_bytesPrefix';
 const _locationPrefix = '_locationPrefix';

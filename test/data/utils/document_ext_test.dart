@@ -1,9 +1,8 @@
 import 'package:fs_service_lib/data/utils/document_ext.dart';
+import 'package:fs_service_lib/utils/path_utils.dart';
 import 'package:googleapis/firestore/v1.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
-
-import '../../../lib/utils/path_utils.dart';
 
 class _MockPathUtils extends Mock implements PathUtils {}
 
