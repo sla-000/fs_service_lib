@@ -578,7 +578,7 @@ void main() {
           }
 
           final docRecursiveStr =
-              await File('test/jsons/doc-2.json').readAsString();
+              await File('test/fixtures/doc-2.json').readAsString();
           final docRecursiveJson =
               jsonDecode(docRecursiveStr) as Map<String, dynamic>;
 
@@ -926,7 +926,7 @@ void main() {
           }
 
           final colRecursiveStr =
-              await File('test/jsons/col-2.json').readAsString();
+              await File('test/fixtures/col-2.json').readAsString();
           final colRecursiveJson =
               jsonDecode(colRecursiveStr) as Map<String, dynamic>;
 
