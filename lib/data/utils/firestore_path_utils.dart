@@ -1,9 +1,11 @@
+/// Helper to handle Firestore paths.
 class FirestorePathUtils {
   FirestorePathUtils();
 
   late String _projectId;
   late String _databaseId;
 
+  /// Initialize the util.
   void init({
     required String projectId,
     String databaseId = '(default)',

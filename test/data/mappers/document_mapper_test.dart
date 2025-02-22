@@ -7,7 +7,7 @@ import 'package:fs_service_lib/utils/path_utils.dart';
 import 'package:googleapis/firestore/v1.dart';
 import 'package:test/test.dart';
 
-import '../../_utils/document_ext.dart';
+import '../../test_utils/document_ext.dart';
 
 void main() {
   final valueUtils = ValueMapper();

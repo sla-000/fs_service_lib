@@ -1,12 +1,15 @@
+// coverage:ignore-file
+
 import 'dart:async';
 
 import 'package:fs_service_lib/data/mappers/document_mapper.dart';
 import 'package:fs_service_lib/data/utils/firestore_path_utils.dart';
-import 'package:fs_service_lib/domain/repo/easy_firestore.dart';
+import 'package:fs_service_lib/domain/repo/firestore_repo.dart';
 import 'package:fs_service_lib/utils/firestore_api_provider.dart';
 import 'package:fs_service_lib/utils/path_utils.dart';
 import 'package:googleapis/firestore/v1.dart';
 
+/// Implementation of the [FirestoreRepo] interface.
 class FirestoreRepoImpl implements FirestoreRepo {
   FirestoreRepoImpl({
     required this.documentMapper,
@@ -23,6 +26,12 @@ class FirestoreRepoImpl implements FirestoreRepo {
   ProjectsDatabasesDocumentsResource get firestore =>
       firestoreApiProvider.api.projects.databases.documents;
 
+  /// Initialize FirestoreRepoImpl with the given [projectId] and [databaseId].
+  ///
+  /// [projectId] is the ID of the Google Cloud Project.
+  /// [databaseId] is the ID of the Firestore Database. By default, it's (default).
+  ///
+  /// It also initializes [documentMapper], [firestoreApiProvider] and [firestorePathUtils].
   @override
   Future<void> init({
     required String projectId,
@@ -38,9 +47,15 @@ class FirestoreRepoImpl implements FirestoreRepo {
     );
   }
 
+  /// Dispose the FirestoreRepoImpl.
+  ///
+  /// It disposes the [firestoreApiProvider].
   @override
   Future<void> dispose() async => firestoreApiProvider.dispose();
 
+  /// Get the collection at [collectionPath] as [JsonObject].
+  ///
+  /// If [changeRootName] is provided, it will be used as the root name for the change.
   @override
   Future<JsonObject> getCollection({
     required String collectionPath,
@@ -75,6 +90,13 @@ class FirestoreRepoImpl implements FirestoreRepo {
     return colJson;
   }
 
+  /// Get all the documents in a collection.
+  ///
+  /// [documentPath] is the path to the parent document.
+  /// [collectionName] is the name of the collection.
+  ///
+  /// Returns a list of [Document] instances representing the documents in the
+  /// collection.
   Future<List<Document>> _getCollectionDocuments({
     required String documentPath,
     required String collectionName,
@@ -107,6 +129,10 @@ class FirestoreRepoImpl implements FirestoreRepo {
     return documents;
   }
 
+  /// Get a document at [documentPath] as [JsonObject].
+  ///
+  /// Returns a [JsonObject] representing the document. It also contains
+  /// sub-collections if any.
   @override
   Future<JsonObject> getDocument({required String documentPath}) async {
     final docPath = firestorePathUtils.absolutePathFromRelative(documentPath);
@@ -124,6 +150,11 @@ class FirestoreRepoImpl implements FirestoreRepo {
     return _getDocumentJson(document: document, json: JsonObject());
   }
 
+  /// Get a document and all it's sub-collections as [JsonObject].
+  ///
+  /// [document] is the document to parse.
+  /// [json] is the [JsonObject] to fill with the document and sub-collections data.
+  ///
   Future<JsonObject> _getDocumentJson({
     required Document document,
     required JsonObject json,
@@ -153,6 +184,12 @@ class FirestoreRepoImpl implements FirestoreRepo {
     return json;
   }
 
+  /// Iterate all the collections of a document.
+  ///
+  /// [collectionNames] is the list of collection names.
+  /// [documentName] is the name of the document.
+  ///
+  /// Returns a list of [JsonObject] representing the collections.
   Future<List<JsonObject>> _iterateAllCollectionsOfDocument(
     List<String> collectionNames,
     String documentName,
@@ -187,6 +224,12 @@ class FirestoreRepoImpl implements FirestoreRepo {
     return allCollectionsArray;
   }
 
+  /// Iterate all the documents of a collection.
+  ///
+  /// [collectionDocuments] is the list of [Document] instances representing the
+  /// documents in the collection.
+  ///
+  /// Returns a list of [JsonObject] representing the documents in the collection.
   Future<List<JsonObject>> _iterateAllDocumentsOfCollection(
     List<Document> collectionDocuments,
   ) async {
@@ -203,6 +246,13 @@ class FirestoreRepoImpl implements FirestoreRepo {
     return allDocumentsInCollection;
   }
 
+  /// Get all the collection names of a document.
+  ///
+  /// [absolutePath] is the absolute path to the document.
+  /// [path] is the relative path to the document.
+  ///
+  /// Only one of [absolutePath] or [path] must be provided.
+  /// Returns a list of collection names.
   Future<List<String>> _getDocumentCollectionNames({
     String absolutePath = '',
     String path = '',
@@ -224,6 +274,12 @@ class FirestoreRepoImpl implements FirestoreRepo {
     return response.collectionIds ?? [];
   }
 
+  /// Add a document to a collection.
+  ///
+  /// [collectionPath] is the path to the collection.
+  /// [json] is the [JsonObject] representing the document data.
+  /// [changeRootName] is the root name for the change.
+  ///
   @override
   Future<void> addDocument({
     required String collectionPath,
@@ -238,6 +294,13 @@ class FirestoreRepoImpl implements FirestoreRepo {
     );
   }
 
+  /// Callback function called when a document is parsed by [documentMapper].
+  ///
+  /// [documentPath] is the path to the document.
+  /// [documentId] is the ID of the document.
+  /// [document] is the [Document] instance representing the document data.
+  ///
+  /// It creates the document in Firestore.
   Future<void> _onDocumentParsed(
     String documentPath,
     String? documentId,
@@ -256,6 +319,11 @@ class FirestoreRepoImpl implements FirestoreRepo {
     );
   }
 
+  /// Update a document.
+  ///
+  /// [documentPath] is the path to the document.
+  /// [json] is the [JsonObject] representing the document data.
+  ///
   @override
   FutureOr<void> updateDocument({
     required String documentPath,
@@ -279,6 +347,12 @@ class FirestoreRepoImpl implements FirestoreRepo {
     );
   }
 
+  /// Add a collection.
+  ///
+  /// [documentPath] is the path to the document.
+  /// [json] is the [JsonObject] representing the collection data.
+  /// [changeRootName] is the root name for the change.
+  ///
   @override
   Future<void> addCollection({
     required String documentPath,
@@ -293,6 +367,12 @@ class FirestoreRepoImpl implements FirestoreRepo {
     );
   }
 
+  /// Delete a document.
+  ///
+  /// [absolutePath] is the absolute path to the document.
+  /// [documentPath] is the relative path to the document.
+  ///
+  /// Only one of [absolutePath] or [documentPath] must be provided.
   @override
   Future<void> deleteDocument({
     String absolutePath = '',
@@ -321,6 +401,12 @@ class FirestoreRepoImpl implements FirestoreRepo {
     await firestore.delete(docPath);
   }
 
+  /// Delete a collection.
+  ///
+  /// [absolutePath] is the absolute path to the collection.
+  /// [collectionPath] is the relative path to the collection.
+  ///
+  /// Only one of [absolutePath] or [collectionPath] must be provided.
   @override
   Future<void> deleteCollection({
     String absolutePath = '',

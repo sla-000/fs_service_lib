@@ -1,7 +1,10 @@
+// coverage:ignore-file
+
 import 'dart:async';
 
 typedef JsonObject = Map<String, dynamic>;
 
+/// Interface for a Firestore repository.
 abstract class FirestoreRepo {
   FutureOr<void> init({
     required String projectId,

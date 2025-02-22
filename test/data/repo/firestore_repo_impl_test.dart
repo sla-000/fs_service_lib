@@ -1,5 +1,7 @@
+// todo Add smoke tests
+
 import 'package:fs_service_lib/data/mappers/document_mapper.dart';
-import 'package:fs_service_lib/data/repo/easy_firestore_impl.dart';
+import 'package:fs_service_lib/data/repo/firestore_repo_impl.dart';
 import 'package:fs_service_lib/data/utils/firestore_path_utils.dart';
 import 'package:fs_service_lib/utils/firestore_api_provider.dart';
 import 'package:fs_service_lib/utils/path_utils.dart';
@@ -60,8 +62,6 @@ void main() {
   setUpAll(() async {
     registerFallbackValue(ListCollectionIdsRequest());
 
-    // di.registerLazySingleton<PathUtils>(() => _mockPathUtils);
-
     when(_mockFirestoreApiProvider.init).thenAnswer((_) async {});
 
     when(() => _mockFirestoreApiProvider.api).thenReturn(_mockFirestoreApi);
@@ -121,7 +121,7 @@ void main() {
           test(
             'smoke test',
             () async {
-              // todo deleteDocument tests
+              // await easyFirestore.deleteDocument(documentPath: 'docName');
             },
           );
         },

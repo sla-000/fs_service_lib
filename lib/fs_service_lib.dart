@@ -1,5 +1,7 @@
+// coverage:ignore-file
+
 import 'package:fs_service_lib/data/mappers/document_mapper.dart';
-import 'package:fs_service_lib/data/repo/easy_firestore_impl.dart';
+import 'package:fs_service_lib/data/repo/firestore_repo_impl.dart';
 import 'package:fs_service_lib/data/utils/firestore_path_utils.dart';
 import 'package:fs_service_lib/domain/mappers/value_mapper.dart';
 import 'package:fs_service_lib/utils/firestore_api_provider.dart';

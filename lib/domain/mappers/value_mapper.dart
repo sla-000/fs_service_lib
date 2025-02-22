@@ -1,23 +1,45 @@
 import 'package:googleapis/firestore/v1.dart';
 
+/// Mapper from firestore value to json and vice versa.
 class ValueMapper {
+  static const kLocationPrefix = 'location://';
+  static const kReferencePrefix = 'reference://';
+  static const kBytesPrefix = 'bytes://';
+  static const kDatetimePrefix = 'datetime://';
+
   late String _locationPrefix;
   late String _referencePrefix;
   late String _bytesPrefix;
   late String _datetimePrefix;
 
+  /// Initializes the prefixes used for encoding specific data types.
+  ///
+  /// This method allows you to customize the prefixes used to identify
+  /// different types of data when converting to and from JSON. If no prefixes
+  /// are provided, default prefixes are used.
+  ///
+  /// [locationPrefix]: Prefix for location data.
+  /// [referencePrefix]: Prefix for reference data.
+  /// [bytesPrefix]: Prefix for bytes data.
+  /// [datetimePrefix]: Prefix for datetime data.
   void init({
     String? locationPrefix,
     String? referencePrefix,
     String? bytesPrefix,
     String? datetimePrefix,
   }) {
-    _locationPrefix = locationPrefix ?? 'location://';
-    _referencePrefix = referencePrefix ?? 'reference://';
-    _bytesPrefix = bytesPrefix ?? 'bytes://';
-    _datetimePrefix = datetimePrefix ?? 'datetime://';
+    _locationPrefix = locationPrefix ?? kLocationPrefix;
+    _referencePrefix = referencePrefix ?? kReferencePrefix;
+    _bytesPrefix = bytesPrefix ?? kBytesPrefix;
+    _datetimePrefix = datetimePrefix ?? kDatetimePrefix;
   }
 
+  /// Converts a Firestore [Value] to its corresponding JSON representation.
+  ///
+  /// This method recursively converts a [Value] object from Firestore into a
+  /// JSON-compatible object. It handles various data types such as GeoPoints,
+  /// maps, arrays, doubles, integers, nulls, references, strings, timestamps,
+  /// booleans, and bytes.
   dynamic toJsonObject(Value value) {
     if (value.geoPointValue != null) {
       final geoPointValue = value.geoPointValue!;
@@ -87,6 +109,12 @@ class ValueMapper {
         'toJson=${value.toJson()}');
   }
 
+  /// Converts a JSON object to its corresponding Firestore [Value] representation.
+  ///
+  /// This method recursively converts a JSON object into a Firestore [Value]
+  /// object. It handles various JSON data types such as doubles, integers,
+  /// booleans, maps, arrays, and strings, including those encoded with custom
+  /// prefixes for locations, references, bytes, and datetimes.
   Value fromJsonObject(dynamic json) {
     if (json is double) {
       return Value(doubleValue: json);
