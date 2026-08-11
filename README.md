@@ -1,5 +1,9 @@
 # fs_service_lib
 
+[![CI](https://github.com/sla-000/fs_service_lib/actions/workflows/ci.yaml/badge.svg)](https://github.com/sla-000/fs_service_lib/actions/workflows/ci.yaml)
+[![Coverage Status](https://coveralls.io/repos/github/sla-000/fs_service_lib/badge.svg?branch=DEV)](https://coveralls.io/github/sla-000/fs_service_lib?branch=DEV)
+[![Pub Version](https://img.shields.io/pub/v/fs_service_lib.svg)](https://pub.dev/packages/fs_service_lib)
+
 A Dart library for interacting with Google Cloud Firestore REST API via `googleapis`. It simplifies creating, reading, updating, and deleting Firestore documents and collections with built-in JSON mapping, typed value prefixes, and configurable in-memory HTTP response caching.
 
 ---
