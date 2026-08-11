@@ -9,4 +9,8 @@ pubspec.lock
 build
 coverage
 
+# IDE files
+*.iml
+.idea/
+
 /secret/**
