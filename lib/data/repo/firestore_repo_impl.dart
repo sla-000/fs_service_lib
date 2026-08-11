@@ -4,7 +4,9 @@ import 'dart:async';
 
 import 'package:fs_service_lib/data/mappers/document_mapper.dart';
 import 'package:fs_service_lib/data/utils/firestore_path_utils.dart';
+import 'package:fs_service_lib/domain/repo/firestore_filter.dart';
 import 'package:fs_service_lib/domain/repo/firestore_repo.dart';
+import 'package:fs_service_lib/domain/repo/firestore_write.dart';
 import 'package:fs_service_lib/utils/firestore_api_provider.dart';
 import 'package:fs_service_lib/utils/path_utils.dart';
 import 'package:googleapis/firestore/v1.dart';
@@ -60,6 +62,9 @@ class FirestoreRepoImpl implements FirestoreRepo {
   Future<JsonObject> getCollection({
     required String collectionPath,
     String? changeRootName,
+    int? pageSize,
+    String? orderBy,
+    bool includeSubcollections = true,
   }) async {
     final collectionParent = pathUtils.parent(collectionPath);
     final collectionName = pathUtils.name(collectionPath);
@@ -68,6 +73,8 @@ class FirestoreRepoImpl implements FirestoreRepo {
       documentPath:
           firestorePathUtils.absolutePathFromRelative(collectionParent),
       collectionName: collectionName,
+      pageSize: pageSize,
+      orderBy: orderBy,
     );
 
     final colJson = JsonObject();
@@ -79,15 +86,119 @@ class FirestoreRepoImpl implements FirestoreRepo {
       final docJson = await _getDocumentJson(
         document: collectionDocument,
         json: JsonObject(),
+        includeSubcollections: includeSubcollections,
       );
 
       docsArrayJson.add(docJson);
     }
 
-    colJson[documentMapper.metaName] = collectionName;
+    colJson[documentMapper.metaName] = changeRootName ?? collectionName;
     colJson[documentMapper.metaDocuments] = docsArrayJson;
 
     return colJson;
+  }
+
+  /// Query documents in a collection at [collectionPath] matching [filters].
+  @override
+  Future<List<JsonObject>> queryCollection({
+    required String collectionPath,
+    List<FirestoreFilter>? filters,
+    int? limit,
+    int? offset,
+    String? orderBy,
+    bool descending = true,
+  }) async {
+    final collectionParent = pathUtils.parent(collectionPath);
+    final collectionName = pathUtils.name(collectionPath);
+    final parent =
+        firestorePathUtils.absolutePathFromRelative(collectionParent);
+
+    final structuredQuery = StructuredQuery(
+      from: [
+        CollectionSelector(
+          collectionId: collectionName,
+          allDescendants: false,
+        ),
+      ],
+      where: _buildFilter(filters),
+      orderBy: orderBy != null
+          ? [
+              Order(
+                field: FieldReference(fieldPath: orderBy),
+                direction: descending ? 'DESCENDING' : 'ASCENDING',
+              ),
+            ]
+          : null,
+      limit: limit,
+      offset: offset,
+    );
+
+    final request = RunQueryRequest(
+      structuredQuery: structuredQuery,
+    );
+
+    final responseList = await firestore.runQuery(
+      request,
+      parent,
+    );
+
+    final results = <JsonObject>[];
+    for (final resp in responseList) {
+      if (resp.document != null) {
+        final docJson = documentMapper.documentToJson(resp.document!);
+        results.add(docJson);
+      }
+    }
+    return results;
+  }
+
+  /// Get all documents in a collection group named [collectionId].
+  @override
+  Future<List<JsonObject>> getCollectionGroup({
+    required String collectionId,
+    int? limit,
+    int? offset,
+    String? orderBy,
+    bool descending = true,
+  }) async {
+    final parent = firestorePathUtils.rootPath;
+
+    final structuredQuery = StructuredQuery(
+      from: [
+        CollectionSelector(
+          collectionId: collectionId,
+          allDescendants: true,
+        ),
+      ],
+      orderBy: orderBy != null
+          ? [
+              Order(
+                field: FieldReference(fieldPath: orderBy),
+                direction: descending ? 'DESCENDING' : 'ASCENDING',
+              ),
+            ]
+          : null,
+      limit: limit,
+      offset: offset,
+    );
+
+    final request = RunQueryRequest(
+      structuredQuery: structuredQuery,
+    );
+
+    final responseList = await firestore.runQuery(
+      request,
+      parent,
+    );
+
+    final results = <JsonObject>[];
+    for (final resp in responseList) {
+      if (resp.document != null) {
+        final docJson = documentMapper.documentToJson(resp.document!);
+        results.add(docJson);
+      }
+    }
+    return results;
   }
 
   /// Get all the documents in a collection.
@@ -100,6 +211,8 @@ class FirestoreRepoImpl implements FirestoreRepo {
   Future<List<Document>> _getCollectionDocuments({
     required String documentPath,
     required String collectionName,
+    int? pageSize,
+    String? orderBy,
   }) async {
     final documents = <Document>[];
     String? pageToken;
@@ -109,7 +222,9 @@ class FirestoreRepoImpl implements FirestoreRepo {
         documentPath,
         collectionName,
         pageToken: pageToken,
-        showMissing: true,
+        pageSize: pageSize,
+        orderBy: orderBy,
+        showMissing: orderBy == null ? true : null,
       );
 
       final listDocuments = listDocumentsResponse.documents;
@@ -119,14 +234,16 @@ class FirestoreRepoImpl implements FirestoreRepo {
         documents.addAll(listDocuments);
       }
 
-      if (listDocuments == null || nextPageToken == null) {
+      if (listDocuments == null ||
+          nextPageToken == null ||
+          (pageSize != null && documents.length >= pageSize)) {
         break;
       }
 
       pageToken = listDocumentsResponse.nextPageToken;
     }
 
-    return documents;
+    return pageSize != null ? documents.take(pageSize).toList() : documents;
   }
 
   /// Get a document at [documentPath] as [JsonObject].
@@ -134,7 +251,10 @@ class FirestoreRepoImpl implements FirestoreRepo {
   /// Returns a [JsonObject] representing the document. It also contains
   /// sub-collections if any.
   @override
-  Future<JsonObject> getDocument({required String documentPath}) async {
+  Future<JsonObject> getDocument({
+    required String documentPath,
+    bool includeSubcollections = true,
+  }) async {
     final docPath = firestorePathUtils.absolutePathFromRelative(documentPath);
 
     var document = Document(name: docPath);
@@ -147,10 +267,69 @@ class FirestoreRepoImpl implements FirestoreRepo {
       }
     }
 
-    return _getDocumentJson(document: document, json: JsonObject());
+    return _getDocumentJson(
+      document: document,
+      json: JsonObject(),
+      includeSubcollections: includeSubcollections,
+    );
   }
 
-  /// Get a document and all it's sub-collections as [JsonObject].
+  /// Get multiple documents by their [documentIds] within a [collectionPath].
+  @override
+  Future<List<JsonObject>> getDocumentsByIds({
+    required String collectionPath,
+    required List<String> documentIds,
+  }) async {
+    if (documentIds.isEmpty) {
+      return [];
+    }
+
+    final parent = firestorePathUtils.rootPath;
+    final documentPaths = documentIds.map((id) {
+      final relPath = pathUtils.join(collectionPath, id);
+      return firestorePathUtils.absolutePathFromRelative(relPath);
+    }).toList();
+
+    final request = BatchGetDocumentsRequest(
+      documents: documentPaths,
+    );
+
+    final responseList = await firestore.batchGet(
+      request,
+      parent,
+    );
+
+    final results = <JsonObject>[];
+    for (final resp in responseList) {
+      if (resp.found != null) {
+        final docJson = documentMapper.documentToJson(resp.found!);
+        results.add(docJson);
+      }
+    }
+    return results;
+  }
+
+  /// Check whether a document exists at [documentPath].
+  @override
+  Future<bool> documentExists({
+    required String documentPath,
+  }) async {
+    final docPath = firestorePathUtils.absolutePathFromRelative(documentPath);
+    try {
+      await firestore.get(
+        docPath,
+        mask_fieldPaths: ['__name__'],
+      );
+      return true;
+    } on DetailedApiRequestError catch (error) {
+      if (error.status == 404) {
+        return false;
+      }
+      rethrow;
+    }
+  }
+
+  /// Get a document and optionally all its sub-collections as [JsonObject].
   ///
   /// [document] is the document to parse.
   /// [json] is the [JsonObject] to fill with the document and sub-collections data.
@@ -158,9 +337,14 @@ class FirestoreRepoImpl implements FirestoreRepo {
   Future<JsonObject> _getDocumentJson({
     required Document document,
     required JsonObject json,
+    bool includeSubcollections = true,
   }) async {
     final documentJson = documentMapper.documentToJson(document);
     json.addAll(documentJson);
+
+    if (!includeSubcollections) {
+      return json;
+    }
 
     final documentName = document.name!;
     final collectionNames =
@@ -344,7 +528,50 @@ class FirestoreRepoImpl implements FirestoreRepo {
     await firestore.patch(
       Document(fields: fields),
       absolutePath,
+      updateMask_fieldPaths: json.keys.toList(),
     );
+  }
+
+  /// Perform atomic batch write operations (updates and deletes).
+  @override
+  Future<void> batchWrite({
+    required List<FirestoreWrite> writes,
+  }) async {
+    if (writes.isEmpty) {
+      return;
+    }
+
+    final apiWrites = writes.map((write) {
+      switch (write) {
+        case UpdateWrite(:final documentPath, :final json):
+          final absPath =
+              firestorePathUtils.absolutePathFromRelative(documentPath);
+          final fields = Map.fromEntries(
+            json.entries.map(
+              (e) => MapEntry(
+                e.key,
+                documentMapper.valueUtils.fromJsonObject(e.value),
+              ),
+            ),
+          );
+          return Write(
+            update: Document(
+              name: absPath,
+              fields: fields,
+            ),
+            updateMask: DocumentMask(fieldPaths: json.keys.toList()),
+          );
+        case DeleteWrite(:final documentPath):
+          final absPath =
+              firestorePathUtils.absolutePathFromRelative(documentPath);
+          return Write(
+            delete: absPath,
+          );
+      }
+    }).toList();
+
+    final request = CommitRequest(writes: apiWrites);
+    await firestore.commit(request, firestorePathUtils.rootPath);
   }
 
   /// Add a collection.
@@ -437,4 +664,105 @@ class FirestoreRepoImpl implements FirestoreRepo {
       }
     }
   }
+
+  /// Count documents in a collection matching [filters].
+  @override
+  Future<int> countCollection({
+    required String collectionPath,
+    List<FirestoreFilter>? filters,
+  }) async {
+    final collectionParent = pathUtils.parent(collectionPath);
+    final collectionName = pathUtils.name(collectionPath);
+    final parent =
+        firestorePathUtils.absolutePathFromRelative(collectionParent);
+
+    final structuredQuery = StructuredQuery(
+      from: [
+        CollectionSelector(
+          collectionId: collectionName,
+          allDescendants: false,
+        ),
+      ],
+      where: _buildFilter(filters),
+    );
+
+    final request = RunAggregationQueryRequest(
+      structuredAggregationQuery: StructuredAggregationQuery(
+        structuredQuery: structuredQuery,
+        aggregations: [
+          Aggregation(
+            count: Count(),
+            alias: 'total_count',
+          ),
+        ],
+      ),
+    );
+
+    final responseList = await firestore.runAggregationQuery(
+      request,
+      parent,
+    );
+
+    for (final resp in responseList) {
+      final aggregateFields = resp.result?.aggregateFields;
+      if (aggregateFields != null && aggregateFields.containsKey('total_count')) {
+        final countValue = aggregateFields['total_count']?.integerValue;
+        if (countValue != null) {
+          return int.parse(countValue);
+        }
+      }
+    }
+
+    return 0;
+  }
+
+  /// Get collection IDs (subcollection names) under [documentPath].
+  @override
+  Future<List<String>> getCollectionIds({
+    required String documentPath,
+  }) =>
+      _getDocumentCollectionNames(path: documentPath);
+
+  /// Build a Firestore REST API [Filter] from a list of [FirestoreFilter]s.
+  Filter? _buildFilter(List<FirestoreFilter>? filters) {
+    if (filters == null || filters.isEmpty) {
+      return null;
+    }
+
+    final fieldFilters = filters.map((f) {
+      final opString = _mapOperator(f.op);
+      final value = documentMapper.valueUtils.fromJsonObject(f.value);
+      return Filter(
+        fieldFilter: FieldFilter(
+          field: FieldReference(fieldPath: f.field),
+          op: opString,
+          value: value,
+        ),
+      );
+    }).toList();
+
+    if (fieldFilters.length == 1) {
+      return fieldFilters.first;
+    }
+
+    return Filter(
+      compositeFilter: CompositeFilter(
+        op: 'AND',
+        filters: fieldFilters,
+      ),
+    );
+  }
+
+  /// Map [FirestoreOperator] to Firestore REST API operator string.
+  String _mapOperator(FirestoreOperator op) => switch (op) {
+        FirestoreOperator.isEqualTo => 'EQUAL',
+        FirestoreOperator.isNotEqualTo => 'NOT_EQUAL',
+        FirestoreOperator.isLessThan => 'LESS_THAN',
+        FirestoreOperator.isLessThanOrEqualTo => 'LESS_THAN_OR_EQUAL',
+        FirestoreOperator.isGreaterThan => 'GREATER_THAN',
+        FirestoreOperator.isGreaterThanOrEqualTo => 'GREATER_THAN_OR_EQUAL',
+        FirestoreOperator.arrayContains => 'ARRAY_CONTAINS',
+        FirestoreOperator.isIn => 'IN',
+        FirestoreOperator.isNotIn => 'NOT_IN',
+      };
 }
