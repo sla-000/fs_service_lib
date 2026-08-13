@@ -3,11 +3,9 @@ name: CI
 on:
   push:
     branches:
-      - DEV
       - dev
   pull_request:
     branches:
-      - DEV
       - dev
 
 jobs:
