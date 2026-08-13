@@ -4,21 +4,67 @@ on:
   push:
     branches:
       - 'release/v*.*'
+    tags:
+      - 'v*'
+  workflow_dispatch:
 
 permissions:
   id-token: write
   contents: write
+  actions: write
 
 jobs:
-  release:
-    name: Build, Verify, Tag & Publish
+  auto-tag:
+    name: Auto Create Tag & Dispatch Release
+    if: startsWith(github.ref, 'refs/heads/release/')
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Extract package version
+        id: get_version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | tr -d '\r')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Found package version: $VERSION"
+
+      - name: Create and push git tag
+        id: create_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          TAG="v$VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists."
+          else
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+            echo "Successfully created and pushed tag $TAG"
+          fi
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Dispatch publication workflow for tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.create_tag.outputs.TAG }}"
+          echo "Triggering release workflow on ref refs/tags/$TAG..."
+          gh workflow run release.yaml --ref "refs/tags/$TAG"
+
+  publish:
+    name: Build, Verify & Publish to pub.dev
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup Dart SDK
         uses: dart-lang/setup-dart@v1
@@ -48,22 +94,4 @@ jobs:
       - name: Publish to pub.dev
         run: dart pub publish --force
 
-      - name: Extract package version
-        id: get_version
-        run: |
-          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | tr -d '\r')
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Create and push git tag
-        run: |
-          RAW_VERSION="${{ steps.get_version.outputs.VERSION }}"
-          VERSION="${RAW_VERSION#v}"
-          TAG="v$VERSION"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists."
-          else
-            git tag -a "$TAG" -m "Release $TAG"
-            git push origin "$TAG"
-          fi
