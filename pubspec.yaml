@@ -1,7 +1,7 @@
 name: fs_service_lib
 description: Firestore service library. Allows to create, delete, update documents and collections 
   using service account.
-version: 2.0.2
+version: 2.0.3
 repository: https://github.com/sla-000/fs_service_lib
 
 environment:
