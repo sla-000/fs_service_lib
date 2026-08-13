@@ -1,3 +1,7 @@
+## 2.0.2
+
+- Chore.
+
 ## 2.0.1
 
 - Fix linter issue.
