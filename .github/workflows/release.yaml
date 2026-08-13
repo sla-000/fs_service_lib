@@ -1,3 +1,21 @@
+# ==============================================================================
+# Package Release & Pub.dev Deployment Workflow
+# ==============================================================================
+# Step-by-step Release Process:
+# 1. Development: All feature work and bug fixes are performed on the `dev` branch.
+# 2. Release Branch: Create a release branch from `dev` (e.g. `release/vXX.XX`).
+# 3. Version Bump: Increase the package version in `pubspec.yaml` (e.g. `version: X.Y.Z`).
+# 4. Changelog: Update and supplement `CHANGELOG.md` with details of changes.
+# 5. Push Branch: Push the `release/vXX.XX` branch to the GitHub repository.
+# 6. CI Checks: Wait for all CI checks (in ci.yaml) to complete successfully on GitHub.
+# 7. Local Tagging: Once checks pass, create a tag locally matching the version in `pubspec.yaml`:
+#      git tag vXX.XX.XX
+# 8. Push Tag: Push the tag to GitHub:
+#      git push origin vXX.XX.XX
+# 9. Automated Deployment: Pushing the tag `v*` triggers this workflow, which
+#    uses OIDC authentication to publish the package to pub.dev automatically.
+# ==============================================================================
+
 name: Publish to pub.dev
 
 on:

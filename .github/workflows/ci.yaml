@@ -1,3 +1,18 @@
+# ==============================================================================
+# Continuous Integration (CI) Workflow
+# ==============================================================================
+# Typical Code Verification & Development Flow:
+# 1. Normal development is conducted on the `dev` branch.
+# 2. Pushes or Pull Requests targeting `dev` (as well as `release/v*.*` and `main`)
+#    automatically trigger this workflow.
+# 3. Code verification steps executed in this pipeline:
+#    - Code formatting check (`dart format`)
+#    - Static code analysis (`dart analyze --fatal-infos`)
+#    - Unit testing with coverage collection (`dart test`)
+#    - LCOV formatting and coverage upload (Coveralls)
+# 4. All checks must pass cleanly before merging code or publishing a release.
+# ==============================================================================
+
 name: CI
 
 on:
