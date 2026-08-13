@@ -245,7 +245,7 @@ class FirestoreRepoImpl implements FirestoreRepo {
     var document = Document(name: docPath);
     try {
       document = await firestore.get(docPath);
-    } on DetailedApiRequestError catch (error, _) {
+    } on DetailedApiRequestError catch (error) {
       // Even if document is empty (returns 404) it still can have collections!
       if (error.status != 404) {
         rethrow;
