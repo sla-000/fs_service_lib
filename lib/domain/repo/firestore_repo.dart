@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fs_service_lib/domain/repo/firestore_filter.dart';
+import 'package:fs_service_lib/domain/repo/firestore_order.dart';
 import 'package:fs_service_lib/domain/repo/firestore_write.dart';
 
 typedef JsonObject = Map<String, dynamic>;
@@ -25,6 +26,8 @@ abstract class FirestoreRepo {
   FutureOr<List<JsonObject>> queryCollection({
     required String collectionPath,
     List<FirestoreFilter>? filters,
+    List<FirestoreOrder>? orders,
+    List<String>? selectFields,
     int? limit,
     int? offset,
     String? orderBy,
@@ -33,6 +36,9 @@ abstract class FirestoreRepo {
 
   FutureOr<List<JsonObject>> getCollectionGroup({
     required String collectionId,
+    List<FirestoreFilter>? filters,
+    List<FirestoreOrder>? orders,
+    List<String>? selectFields,
     int? limit,
     int? offset,
     String? orderBy,
@@ -79,6 +85,11 @@ abstract class FirestoreRepo {
 
   FutureOr<int> countCollection({
     required String collectionPath,
+    List<FirestoreFilter>? filters,
+  });
+
+  FutureOr<int> countCollectionGroup({
+    required String collectionId,
     List<FirestoreFilter>? filters,
   });
 

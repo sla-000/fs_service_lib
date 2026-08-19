@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:fs_service_lib/data/mappers/document_mapper.dart';
 import 'package:fs_service_lib/data/utils/firestore_path_utils.dart';
 import 'package:fs_service_lib/domain/repo/firestore_filter.dart';
+import 'package:fs_service_lib/domain/repo/firestore_order.dart';
 import 'package:fs_service_lib/domain/repo/firestore_repo.dart';
 import 'package:fs_service_lib/domain/repo/firestore_write.dart';
 import 'package:fs_service_lib/utils/firestore_api_provider.dart';
@@ -101,6 +102,8 @@ class FirestoreRepoImpl implements FirestoreRepo {
   Future<List<JsonObject>> queryCollection({
     required String collectionPath,
     List<FirestoreFilter>? filters,
+    List<FirestoreOrder>? orders,
+    List<String>? selectFields,
     int? limit,
     int? offset,
     String? orderBy,
@@ -117,15 +120,8 @@ class FirestoreRepoImpl implements FirestoreRepo {
         CollectionSelector(collectionId: collectionName, allDescendants: false),
       ],
       where: _buildFilter(filters),
-      orderBy:
-          orderBy != null
-              ? [
-                Order(
-                  field: FieldReference(fieldPath: orderBy),
-                  direction: descending ? 'DESCENDING' : 'ASCENDING',
-                ),
-              ]
-              : null,
+      select: _buildProjection(selectFields),
+      orderBy: _buildOrders(orders, orderBy, descending),
       limit: limit,
       offset: offset,
     );
@@ -148,6 +144,9 @@ class FirestoreRepoImpl implements FirestoreRepo {
   @override
   Future<List<JsonObject>> getCollectionGroup({
     required String collectionId,
+    List<FirestoreFilter>? filters,
+    List<FirestoreOrder>? orders,
+    List<String>? selectFields,
     int? limit,
     int? offset,
     String? orderBy,
@@ -159,15 +158,9 @@ class FirestoreRepoImpl implements FirestoreRepo {
       from: [
         CollectionSelector(collectionId: collectionId, allDescendants: true),
       ],
-      orderBy:
-          orderBy != null
-              ? [
-                Order(
-                  field: FieldReference(fieldPath: orderBy),
-                  direction: descending ? 'DESCENDING' : 'ASCENDING',
-                ),
-              ]
-              : null,
+      where: _buildFilter(filters),
+      select: _buildProjection(selectFields),
+      orderBy: _buildOrders(orders, orderBy, descending),
       limit: limit,
       offset: offset,
     );
@@ -684,6 +677,44 @@ class FirestoreRepoImpl implements FirestoreRepo {
     return 0;
   }
 
+  /// Count documents in a collection group named [collectionId] matching [filters].
+  @override
+  Future<int> countCollectionGroup({
+    required String collectionId,
+    List<FirestoreFilter>? filters,
+  }) async {
+    final parent = firestorePathUtils.rootPath;
+
+    final structuredQuery = StructuredQuery(
+      from: [
+        CollectionSelector(collectionId: collectionId, allDescendants: true),
+      ],
+      where: _buildFilter(filters),
+    );
+
+    final request = RunAggregationQueryRequest(
+      structuredAggregationQuery: StructuredAggregationQuery(
+        structuredQuery: structuredQuery,
+        aggregations: [Aggregation(count: Count(), alias: 'total_count')],
+      ),
+    );
+
+    final responseList = await firestore.runAggregationQuery(request, parent);
+
+    for (final resp in responseList) {
+      final aggregateFields = resp.result?.aggregateFields;
+      if (aggregateFields != null &&
+          aggregateFields.containsKey('total_count')) {
+        final countValue = aggregateFields['total_count']?.integerValue;
+        if (countValue != null) {
+          return int.parse(countValue);
+        }
+      }
+    }
+
+    return 0;
+  }
+
   /// Get collection IDs (subcollection names) under [documentPath].
   @override
   Future<List<String>> getCollectionIds({required String documentPath}) =>
@@ -714,6 +745,46 @@ class FirestoreRepoImpl implements FirestoreRepo {
 
     return Filter(
       compositeFilter: CompositeFilter(op: 'AND', filters: fieldFilters),
+    );
+  }
+
+  /// Build a list of Firestore REST API [Order]s from [FirestoreOrder]s or fallback [orderBy].
+  List<Order>? _buildOrders(
+    List<FirestoreOrder>? orders,
+    String? orderBy,
+    bool descending,
+  ) {
+    if (orders != null && orders.isNotEmpty) {
+      return orders
+          .map(
+            (o) => Order(
+              field: FieldReference(fieldPath: o.field),
+              direction: o.descending ? 'DESCENDING' : 'ASCENDING',
+            ),
+          )
+          .toList();
+    }
+
+    if (orderBy != null) {
+      return [
+        Order(
+          field: FieldReference(fieldPath: orderBy),
+          direction: descending ? 'DESCENDING' : 'ASCENDING',
+        ),
+      ];
+    }
+
+    return null;
+  }
+
+  /// Build a Firestore REST API [Projection] from [selectFields].
+  Projection? _buildProjection(List<String>? selectFields) {
+    if (selectFields == null || selectFields.isEmpty) {
+      return null;
+    }
+
+    return Projection(
+      fields: selectFields.map((f) => FieldReference(fieldPath: f)).toList(),
     );
   }
 

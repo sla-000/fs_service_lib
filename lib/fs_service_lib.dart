@@ -9,6 +9,7 @@ import 'package:fs_service_lib/utils/firestore_api_provider.dart';
 import 'package:fs_service_lib/utils/path_utils.dart';
 
 export 'package:fs_service_lib/domain/repo/firestore_filter.dart';
+export 'package:fs_service_lib/domain/repo/firestore_order.dart';
 export 'package:fs_service_lib/domain/repo/firestore_repo.dart';
 export 'package:fs_service_lib/domain/repo/firestore_write.dart';
 export 'package:fs_service_lib/utils/caching_http_client.dart';
