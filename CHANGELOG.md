@@ -1,3 +1,7 @@
+## 2.1.0
+
+- Add FirestoreOrder model and support advanced query features including projection, multi-order sorting, and collection group countingChore.
+
 ## 2.0.4
 
 - Chore.
