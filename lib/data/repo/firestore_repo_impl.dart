@@ -540,7 +540,7 @@ class FirestoreRepoImpl implements FirestoreRepo {
         }).toList();
 
     final request = CommitRequest(writes: apiWrites);
-    await firestore.commit(request, firestorePathUtils.rootPath);
+    await firestore.commit(request, firestorePathUtils.databasePath);
   }
 
   /// Add a collection.

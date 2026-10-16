@@ -1,3 +1,8 @@
+## 2.1.1
+
+- Fix `batchWrite` database endpoint path to eliminate duplicate `/documents` in Firestore commit REST URL.
+- Add `databasePath` getter to `FirestorePathUtils`.
+
 ## 2.1.0
 
 - Add FirestoreOrder model and support advanced query features including projection, multi-order sorting, and collection group countingChore.
