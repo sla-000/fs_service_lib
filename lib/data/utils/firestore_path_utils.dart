@@ -34,6 +34,9 @@ class FirestorePathUtils {
     return segments[1];
   }
 
-  String get rootPath =>
-      'projects/$_projectId/databases/$_databaseId/documents';
+  /// The Firestore database resource path:
+  /// `projects/{projectId}/databases/{databaseId}`
+  String get databasePath => 'projects/$_projectId/databases/$_databaseId';
+
+  String get rootPath => '$databasePath/documents';
 }

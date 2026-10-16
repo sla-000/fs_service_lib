@@ -34,6 +34,17 @@ void main() {
         equals('projects/$projectId/databases/$databaseId/documents/$path'),
       );
     });
+
+    test('databasePath returns project and custom database path', () {
+      expect(
+        firestorePathUtils.databasePath,
+        equals('projects/$projectId/databases/$databaseId'),
+      );
+      expect(
+        firestorePathUtils.databasePath,
+        matches(RegExp(r'^projects/[^/]+/databases/[^/]+$')),
+      );
+    });
   });
 
   group('FirestorePathUtils tests 2 - ', () {
@@ -63,6 +74,17 @@ void main() {
       expect(
         firestorePathUtils.absolutePathFromRelative(path),
         equals('projects/$projectId/databases/(default)/documents/$path'),
+      );
+    });
+
+    test('databasePath returns project and default database path', () {
+      expect(
+        firestorePathUtils.databasePath,
+        equals('projects/$projectId/databases/(default)'),
+      );
+      expect(
+        firestorePathUtils.databasePath,
+        matches(RegExp(r'^projects/[^/]+/databases/[^/]+$')),
       );
     });
   });

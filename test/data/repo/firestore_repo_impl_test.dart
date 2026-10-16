@@ -97,6 +97,9 @@ void main() {
     when(() => _mockPathUtils.parent(any())).thenReturn(_parent);
     when(() => _mockPathUtils.name(any())).thenReturn(_name);
     when(
+      () => _mockFirestorePathUtils.databasePath,
+    ).thenReturn('projects/p/databases/d');
+    when(
       () => _mockFirestorePathUtils.rootPath,
     ).thenReturn('projects/p/databases/d/documents');
     when(
@@ -226,26 +229,45 @@ void main() {
         );
       });
 
-      test('executes commit with UpdateWrite and DeleteWrite', () async {
-        when(() => _mockDocumentMapper.valueUtils).thenReturn(ValueMapper());
-        when(
-          () => _mockProjectsDatabasesDocumentsResource.commit(any(), any()),
-        ).thenAnswer((_) async => CommitResponse());
+      test(
+        'executes commit with UpdateWrite and DeleteWrite targeting databasePath',
+        () async {
+          when(() => _mockDocumentMapper.valueUtils).thenReturn(ValueMapper());
+          when(
+            () => _mockProjectsDatabasesDocumentsResource.commit(any(), any()),
+          ).thenAnswer((_) async => CommitResponse());
 
-        await easyFirestore.batchWrite(
-          writes: [
-            const UpdateWrite(
-              documentPath: 'users/id1',
-              json: {'name': 'Alice'},
+          await easyFirestore.batchWrite(
+            writes: [
+              const UpdateWrite(
+                documentPath: 'users/id1',
+                json: {'name': 'Alice'},
+              ),
+              const DeleteWrite(documentPath: 'users/id2'),
+            ],
+          );
+
+          verify(
+            () => _mockProjectsDatabasesDocumentsResource.commit(
+              any(
+                that: isA<CommitRequest>().having(
+                  (r) => r.writes?.length,
+                  'writes length',
+                  2,
+                ),
+              ),
+              'projects/p/databases/d',
             ),
-            const DeleteWrite(documentPath: 'users/id2'),
-          ],
-        );
+          ).called(1);
 
-        verify(
-          () => _mockProjectsDatabasesDocumentsResource.commit(any(), any()),
-        ).called(1);
-      });
+          verifyNever(
+            () => _mockProjectsDatabasesDocumentsResource.commit(
+              any(),
+              'projects/p/databases/d/documents',
+            ),
+          );
+        },
+      );
     });
 
     group('countCollection tests - ', () {
