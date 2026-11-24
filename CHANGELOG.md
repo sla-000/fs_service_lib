@@ -1,3 +1,7 @@
+## 2.1.2
+
+- Fix `getDocumentsByIds` database endpoint path to eliminate duplicate `/documents` in Firestore `batchGet` REST URL.
+
 ## 2.1.1
 
 - Fix `batchWrite` database endpoint path to eliminate duplicate `/documents` in Firestore commit REST URL.

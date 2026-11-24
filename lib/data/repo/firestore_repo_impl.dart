@@ -262,7 +262,7 @@ class FirestoreRepoImpl implements FirestoreRepo {
       return [];
     }
 
-    final parent = firestorePathUtils.rootPath;
+    final database = firestorePathUtils.databasePath;
     final documentPaths =
         documentIds.map((id) {
           final relPath = pathUtils.join(collectionPath, id);
@@ -271,7 +271,7 @@ class FirestoreRepoImpl implements FirestoreRepo {
 
     final request = BatchGetDocumentsRequest(documents: documentPaths);
 
-    final responseList = await firestore.batchGet(request, parent);
+    final responseList = await firestore.batchGet(request, database);
 
     final results = <JsonObject>[];
     for (final resp in responseList) {

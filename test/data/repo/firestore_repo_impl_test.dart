@@ -170,25 +170,47 @@ void main() {
         expect(results, isEmpty);
       });
 
-      test('executes batchGet and maps found documents', () async {
-        when(
-          () => _mockProjectsDatabasesDocumentsResource.batchGet(any(), any()),
-        ).thenAnswer(
-          (_) async => [BatchGetDocumentsResponseElement(found: _document1)],
-        );
-        when(
-          () => _mockDocumentMapper.documentToJson(_document1),
-        ).thenReturn({'key': 'val1'});
+      test(
+        'executes batchGet targeting databasePath and maps found documents',
+        () async {
+          when(
+            () =>
+                _mockProjectsDatabasesDocumentsResource.batchGet(any(), any()),
+          ).thenAnswer(
+            (_) async => [BatchGetDocumentsResponseElement(found: _document1)],
+          );
+          when(
+            () => _mockDocumentMapper.documentToJson(_document1),
+          ).thenReturn({'key': 'val1'});
 
-        final results = await easyFirestore.getDocumentsByIds(
-          collectionPath: 'users',
-          documentIds: ['id1'],
-        );
+          final results = await easyFirestore.getDocumentsByIds(
+            collectionPath: 'users',
+            documentIds: ['id1'],
+          );
 
-        expect(results, [
-          {'key': 'val1'},
-        ]);
-      });
+          expect(results, [
+            {'key': 'val1'},
+          ]);
+          verify(
+            () => _mockProjectsDatabasesDocumentsResource.batchGet(
+              any(
+                that: isA<BatchGetDocumentsRequest>().having(
+                  (r) => r.documents,
+                  'documents',
+                  ['projects/p/databases/d/documents/$_joinedPath'],
+                ),
+              ),
+              'projects/p/databases/d',
+            ),
+          ).called(1);
+          verifyNever(
+            () => _mockProjectsDatabasesDocumentsResource.batchGet(
+              any(),
+              'projects/p/databases/d/documents',
+            ),
+          );
+        },
+      );
     });
 
     group('documentExists tests - ', () {
