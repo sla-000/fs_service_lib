@@ -48,8 +48,9 @@ class CachingHttpClientMemory extends CachingHttpClient {
 
   @override
   void invalidateUrl(String urlOrPrefix) {
-    final keysToRemove =
-        _cache.keys.where((key) => key.contains(urlOrPrefix)).toList();
+    final keysToRemove = _cache.keys
+        .where((key) => key.contains(urlOrPrefix))
+        .toList();
     keysToRemove.forEach(_removeKey);
     if (keysToRemove.isNotEmpty) {
       stats.invalidations++;
@@ -178,8 +179,9 @@ class CachingHttpClientMemory extends CachingHttpClient {
               .sublist(0, pathSegments.length - 1)
               .join('/');
           if (parentPath.isNotEmpty) {
-            final keysToRemove =
-                _cache.keys.where((key) => key.contains(parentPath)).toList();
+            final keysToRemove = _cache.keys
+                .where((key) => key.contains(parentPath))
+                .toList();
             keysToRemove.forEach(_removeKey);
           }
         }

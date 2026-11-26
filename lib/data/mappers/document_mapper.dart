@@ -1,3 +1,6 @@
+// googleapis 17+ deprecates firestore/v1 in favor of google_cloud_firestore_v1.
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 
 import 'package:fs_service_lib/data/utils/document_ext.dart';
@@ -61,14 +64,16 @@ class DocumentMapper {
     docJson[metaName] = document.id(pathUtils);
 
     if (document.createTime != null) {
-      final createTime =
-          DateTime.tryParse(document.createTime!)?.toUtc().toIso8601String();
+      final createTime = DateTime.tryParse(
+        document.createTime!,
+      )?.toUtc().toIso8601String();
       docJson[metaCreateTime] = createTime;
     }
 
     if (document.updateTime != null) {
-      final updateTime =
-          DateTime.tryParse(document.updateTime!)?.toUtc().toIso8601String();
+      final updateTime = DateTime.tryParse(
+        document.updateTime!,
+      )?.toUtc().toIso8601String();
       docJson[metaUpdateTime] = updateTime;
     }
 

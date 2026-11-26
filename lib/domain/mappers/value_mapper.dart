@@ -1,3 +1,6 @@
+// googleapis 17+ deprecates firestore/v1 in favor of google_cloud_firestore_v1.
+// ignore_for_file: deprecated_member_use
+
 import 'package:googleapis/firestore/v1.dart';
 
 /// Mapper from firestore value to json and vice versa.
@@ -91,8 +94,9 @@ class ValueMapper {
     }
 
     if (value.timestampValue != null) {
-      final datetime =
-          DateTime.parse(value.timestampValue!).toUtc().toIso8601String();
+      final datetime = DateTime.parse(
+        value.timestampValue!,
+      ).toUtc().toIso8601String();
 
       return '$_datetimePrefix$datetime';
     }
@@ -151,7 +155,9 @@ class ValueMapper {
         final strings = json.substring(_locationPrefix.length).split('/');
         final lat = double.parse(strings[0]);
         final lon = double.parse(strings[1]);
-        return Value(geoPointValue: LatLng(latitude: lat, longitude: lon));
+        return Value(
+          geoPointValue: LatLng(latitude: lat, longitude: lon),
+        );
       }
 
       if (json.startsWith(_referencePrefix)) {

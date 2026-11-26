@@ -1,3 +1,6 @@
+// googleapis 17+ deprecates firestore/v1 in favor of google_cloud_firestore_v1.
+// ignore_for_file: deprecated_member_use
+
 import 'package:fs_service_lib/data/mappers/document_mapper.dart';
 import 'package:fs_service_lib/data/repo/firestore_repo_impl.dart';
 import 'package:fs_service_lib/data/utils/firestore_path_utils.dart';

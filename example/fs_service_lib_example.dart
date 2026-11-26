@@ -26,10 +26,9 @@ void main() async {
       maxSizeBytes: 50 * 1024 * 1024, // 50 MB max disk cache
       maxEntrySizeBytes: 2 * 1024 * 1024, // 2 MB max single entry size
       invalidationStrategy: CacheInvalidationStrategy.smart,
-      onCacheHit:
-          (url, stats) => stdout.writeln(
-            'CACHE HIT: $url (Ratio: ${stats.hitRatioPercentage})',
-          ),
+      onCacheHit: (url, stats) => stdout.writeln(
+        'CACHE HIT: $url (Ratio: ${stats.hitRatioPercentage})',
+      ),
     ),
   );
 
