@@ -1,3 +1,6 @@
+// googleapis 17+ deprecates firestore/v1 in favor of google_cloud_firestore_v1.
+// ignore_for_file: deprecated_member_use
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -495,8 +498,9 @@ void main() {
         }
       }
 
-      final docRecursiveStr =
-          await File('test/fixtures/doc-2.json').readAsString();
+      final docRecursiveStr = await File(
+        'test/fixtures/doc-2.json',
+      ).readAsString();
       final docRecursiveJson =
           jsonDecode(docRecursiveStr) as Map<String, dynamic>;
 
@@ -785,8 +789,9 @@ void main() {
         }
       }
 
-      final colRecursiveStr =
-          await File('test/fixtures/col-2.json').readAsString();
+      final colRecursiveStr = await File(
+        'test/fixtures/col-2.json',
+      ).readAsString();
       final colRecursiveJson =
           jsonDecode(colRecursiveStr) as Map<String, dynamic>;
 

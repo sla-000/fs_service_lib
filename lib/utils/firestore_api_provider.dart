@@ -1,4 +1,6 @@
 // coverage:ignore-file
+// googleapis 17+ deprecates firestore/v1 in favor of google_cloud_firestore_v1.
+// ignore_for_file: deprecated_member_use
 
 import 'dart:async';
 

@@ -99,8 +99,9 @@ class CachingHttpClientHive extends CachingHttpClient {
 
   @override
   void invalidateUrl(String urlOrPrefix) {
-    final keysToRemove =
-        _box.keys.where((key) => key.toString().contains(urlOrPrefix)).toList();
+    final keysToRemove = _box.keys
+        .where((key) => key.toString().contains(urlOrPrefix))
+        .toList();
     keysToRemove.forEach(_removeKeySync);
     if (keysToRemove.isNotEmpty) {
       stats.invalidations++;
@@ -242,10 +243,9 @@ class CachingHttpClientHive extends CachingHttpClient {
               .sublist(0, pathSegments.length - 1)
               .join('/');
           if (parentPath.isNotEmpty) {
-            final keysToRemove =
-                _box.keys
-                    .where((key) => key.toString().contains(parentPath))
-                    .toList();
+            final keysToRemove = _box.keys
+                .where((key) => key.toString().contains(parentPath))
+                .toList();
             for (final key in keysToRemove) {
               await _removeKey(key);
             }

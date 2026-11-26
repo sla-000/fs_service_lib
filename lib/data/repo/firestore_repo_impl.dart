@@ -1,4 +1,6 @@
 // coverage:ignore-file
+// googleapis 17+ deprecates firestore/v1 in favor of google_cloud_firestore_v1.
+// ignore_for_file: deprecated_member_use
 
 import 'dart:async';
 
@@ -263,11 +265,10 @@ class FirestoreRepoImpl implements FirestoreRepo {
     }
 
     final database = firestorePathUtils.databasePath;
-    final documentPaths =
-        documentIds.map((id) {
-          final relPath = pathUtils.join(collectionPath, id);
-          return firestorePathUtils.absolutePathFromRelative(relPath);
-        }).toList();
+    final documentPaths = documentIds.map((id) {
+      final relPath = pathUtils.join(collectionPath, id);
+      return firestorePathUtils.absolutePathFromRelative(relPath);
+    }).toList();
 
     final request = BatchGetDocumentsRequest(documents: documentPaths);
 
@@ -512,32 +513,31 @@ class FirestoreRepoImpl implements FirestoreRepo {
       return;
     }
 
-    final apiWrites =
-        writes.map((write) {
-          switch (write) {
-            case UpdateWrite(:final documentPath, :final json):
-              final absPath = firestorePathUtils.absolutePathFromRelative(
-                documentPath,
-              );
-              final fields = Map.fromEntries(
-                json.entries.map(
-                  (e) => MapEntry(
-                    e.key,
-                    documentMapper.valueUtils.fromJsonObject(e.value),
-                  ),
-                ),
-              );
-              return Write(
-                update: Document(name: absPath, fields: fields),
-                updateMask: DocumentMask(fieldPaths: json.keys.toList()),
-              );
-            case DeleteWrite(:final documentPath):
-              final absPath = firestorePathUtils.absolutePathFromRelative(
-                documentPath,
-              );
-              return Write(delete: absPath);
-          }
-        }).toList();
+    final apiWrites = writes.map((write) {
+      switch (write) {
+        case UpdateWrite(:final documentPath, :final json):
+          final absPath = firestorePathUtils.absolutePathFromRelative(
+            documentPath,
+          );
+          final fields = Map.fromEntries(
+            json.entries.map(
+              (e) => MapEntry(
+                e.key,
+                documentMapper.valueUtils.fromJsonObject(e.value),
+              ),
+            ),
+          );
+          return Write(
+            update: Document(name: absPath, fields: fields),
+            updateMask: DocumentMask(fieldPaths: json.keys.toList()),
+          );
+        case DeleteWrite(:final documentPath):
+          final absPath = firestorePathUtils.absolutePathFromRelative(
+            documentPath,
+          );
+          return Write(delete: absPath);
+      }
+    }).toList();
 
     final request = CommitRequest(writes: apiWrites);
     await firestore.commit(request, firestorePathUtils.databasePath);
@@ -726,18 +726,17 @@ class FirestoreRepoImpl implements FirestoreRepo {
       return null;
     }
 
-    final fieldFilters =
-        filters.map((f) {
-          final opString = _mapOperator(f.op);
-          final value = documentMapper.valueUtils.fromJsonObject(f.value);
-          return Filter(
-            fieldFilter: FieldFilter(
-              field: FieldReference(fieldPath: f.field),
-              op: opString,
-              value: value,
-            ),
-          );
-        }).toList();
+    final fieldFilters = filters.map((f) {
+      final opString = _mapOperator(f.op);
+      final value = documentMapper.valueUtils.fromJsonObject(f.value);
+      return Filter(
+        fieldFilter: FieldFilter(
+          field: FieldReference(fieldPath: f.field),
+          op: opString,
+          value: value,
+        ),
+      );
+    }).toList();
 
     if (fieldFilters.length == 1) {
       return fieldFilters.first;

@@ -63,21 +63,20 @@ class FsServiceLib {
 
     db = FirestoreRepoImpl(
       documentMapper: DocumentMapper(
-        valueUtils:
-            ValueMapper()..init(
-              locationPrefix: locationPrefix,
-              referencePrefix: referencePrefix,
-              bytesPrefix: bytesPrefix,
-              datetimePrefix: datetimePrefix,
-            ),
+        valueUtils: ValueMapper()
+          ..init(
+            locationPrefix: locationPrefix,
+            referencePrefix: referencePrefix,
+            bytesPrefix: bytesPrefix,
+            datetimePrefix: datetimePrefix,
+          ),
         pathUtils: pathUtils,
       )..init(metaPrefix: metaPrefix),
       firestoreApiProvider: FirestoreApiProviderImpl(
         cachingClient: cachingClient,
       ),
-      firestorePathUtils:
-          FirestorePathUtils()
-            ..init(projectId: projectId, databaseId: databaseId),
+      firestorePathUtils: FirestorePathUtils()
+        ..init(projectId: projectId, databaseId: databaseId),
       pathUtils: pathUtils,
     );
 
